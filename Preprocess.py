@@ -20,6 +20,7 @@ df column 추가
 # i-1 까지
 ## 이전 정확도 * 이전문제 개수 * w + 정답여부 / w + 1
 ## w<1 w를 사용하여 과거데이터에 대한 가중치 조정
+
 '''
 def addAccumulateAcc(df, w):
     # 사용자 누적 정확도를 담을 dict
@@ -27,37 +28,46 @@ def addAccumulateAcc(df, w):
     accList = []
     countList = []
     rightNums = []
+    lectureCount = []
 
-    # 시점별 누적 정확도 계산
-    # 초기값 0.5 설정
+    #시점별 누적 정확도 계산
+    #초기값 0.5 설정
     for i in range(len(df)):
         row = df.iloc[i]
         uid = row.user_id
         correct = row.answered_correctly
+        lecture = row.content_type_id
 
         if uid not in userAccDict:
-            userAccDict[uid] = [1, 0, 0.5]  # num of quiz, num of correct, Acc
+            userAccDict[uid] = [1,0,0.5,0] #num of quiz, num of correct, Acc, lecture
             accList.append(0.5)
             countList.append(0)
             rightNums.append(0)
+            lectureCount.append(0)
         else:
             accList.append(userAccDict[uid][2])
-            countList.append(userAccDict[uid][0] - 1)
+            countList.append(userAccDict[uid][0]-1)
             rightNums.append(userAccDict[uid][1])
+            lectureCount.append(userAccDict[uid][3])
+
 
         # 누적 정확도 계산 --> 다음 row에 추가
         # lecture 인 경우도 1로 통일
+        if lecture:
+            userAccDict[uid][3]+=1
+
         if correct == 1:
             userAccDict[uid][1] += 1
-            userAccDict[uid][2] = (userAccDict[uid][2] * userAccDict[uid][0] * w + 1) / (userAccDict[uid][0] * w + 1)
+            userAccDict[uid][2] = (userAccDict[uid][2]*userAccDict[uid][0]*w + 1)/(userAccDict[uid][0]*w+1)
             userAccDict[uid][0] += 1
         else:
-            userAccDict[uid][2] = (userAccDict[uid][2] * userAccDict[uid][0] * w + 0) / (userAccDict[uid][0] * w + 1)
+            userAccDict[uid][2] = (userAccDict[uid][2]*userAccDict[uid][0]*w + 0)/(userAccDict[uid][0]*w+1)
             userAccDict[uid][0] += 1
 
     df['accumulate_user_acc'] = accList
     df['accumulate_user_count'] = countList
     df['accumulate_user_right'] = rightNums
+    df['user_lecture'] = lectureCount
 
 
 '''
